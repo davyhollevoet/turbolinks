@@ -23,7 +23,8 @@ EVENTS =
   RESTORE:        'page:restore'
   BEFORE_UNLOAD:  'page:before-unload'
   AFTER_REMOVE:   'page:after-remove'
-  NAMED_PAGE:     'page:named'
+  NAMED_ENTER:    'page:named-enter'
+  NAMED_EXIT:     'page:named-exit'
 
 isPartialReplacement = (options) ->
   options.change or options.append or options.prepend
@@ -307,7 +308,8 @@ nameCurrentPage = (name, state = {}) ->
   setCurrentTitle state
   rememberCurrentUrlAndState $.extend( page_name: name , state)
   if name isnt old_name
-    triggerEvent EVENTS.NAMED_PAGE, name
+    triggerEvent EVENTS.NAMED_EXIT, old_name
+    triggerEvent EVENTS.NAMED_ENTER, name
 
 pushCustomState = (state, url = document.location.href) ->
   window.history.pushState $.extend( turbolinks: true, url: url , state), '', url
@@ -683,22 +685,25 @@ onHistoryChange = (event) ->
       console.log "Named page #{event.state.page_name} is already shown"
       document.title = event.state.title if event.state.title?
       rememberCurrentUrlAndState event.state, event.state.url
-      triggerEvent EVENTS.NAMED_PAGE, event.state.page_name
+      triggerEvent EVENTS.NAMED_ENTER, event.state.page_name
     else if event.state.page_name? and cachedPage = pageCache[event.state.page_name]
       console.log "Restoring named page", event.state.page_name
+      triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
       cacheCurrentPage()
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
       document.title = event.state.title if event.state.title?
-      triggerEvent EVENTS.NAMED_PAGE, event.state.page_name
+      triggerEvent EVENTS.NAMED_ENTER, event.state.page_name
     
     else if newUrl.withoutHash() is previousUrl.withoutHash()
       updateScrollPosition()
     else if cachedPage = pageCache[newUrl.absolute]
       console.log "Restoring url", newUrl.absolute
+      triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
       cacheCurrentPage()
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
     else
       console.log "Fetching history page", event.target.location.href
+      triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
       visit event.target.location.href
 
 initializeTurbolinks = ->
