@@ -688,6 +688,7 @@ onHistoryChange = (event) ->
       console.log "Restoring named page", event.state.page_name
       cacheCurrentPage()
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
+      document.title = event.state.title if event.state.title?
       triggerEvent EVENTS.NAMED_PAGE, event.state.page_name
     
     else if newUrl.withoutHash() is previousUrl.withoutHash()
