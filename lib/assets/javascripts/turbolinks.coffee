@@ -706,7 +706,7 @@ initializeTurbolinks = ->
   ProgressBar.enable()
 
   document.addEventListener 'click', Click.installHandlerLast, true
-  window.addEventListener 'hashchange', rememberCurrentUrlAndState, false
+  window.addEventListener 'hashchange', (-> rememberCurrentUrlAndState()), false
   window.addEventListener 'popstate', onHistoryChange, false
 
 browserSupportsPushState = window.history and 'pushState' of window.history and 'state' of window.history
