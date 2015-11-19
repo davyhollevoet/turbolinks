@@ -282,6 +282,7 @@ setAutofocusElement = ->
 
 reflectNewUrl = (url) ->
   if (url = new ComponentUrl url).absolute not in [referer, document.location.href]
+    triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
     window.history.pushState { turbolinks: true, url: url.absolute }, '', url.absolute
 
 reflectRedirectedUrl = ->
