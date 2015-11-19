@@ -23,6 +23,7 @@ EVENTS =
   RESTORE:        'page:restore'
   BEFORE_UNLOAD:  'page:before-unload'
   AFTER_REMOVE:   'page:after-remove'
+  NAMED_PAGE:     'page:named'
 
 isPartialReplacement = (options) ->
   options.change or options.append or options.prepend
@@ -116,8 +117,11 @@ fetchHistory = (cachedPage, options = {}) ->
 
 cacheCurrentPage = ->
   currentStateUrl = new ComponentUrl currentState.url
+  
+  #if no page name is set, use the url of the page as cache key
+  page_name = if currentState.page_name? then currentState.page_name else currentStateUrl.absolute
 
-  pageCache[currentStateUrl.absolute] =
+  pageCache[page_name] =
     url:                      currentStateUrl.relative,
     body:                     document.body,
     title:                    document.title,
@@ -291,8 +295,23 @@ crossOriginRedirect = ->
 rememberReferer = ->
   referer = document.location.href
 
-rememberCurrentUrlAndState = ->
-  window.history.replaceState { turbolinks: true, url: document.location.href }, '', document.location.href
+rememberCurrentUrlAndState = (state = {}, url = document.location.href)->
+  window.history.replaceState $.extend( turbolinks: true, url: url , state), '', url
+  currentState = window.history.state
+
+setCurrentTitle = (state) ->
+  document.title = state.title if state.title?
+  
+nameCurrentPage = (name, state = {}) ->
+  old_name = window.history.state.page_name
+  setCurrentTitle state
+  rememberCurrentUrlAndState $.extend( page_name: name , state)
+  if name isnt old_name
+    triggerEvent EVENTS.NAMED_PAGE, name
+
+pushCustomState = (state, url = document.location.href) ->
+  window.history.pushState $.extend( turbolinks: true, url: url , state), '', url
+  setCurrentTitle state
   currentState = window.history.state
 
 updateScrollPosition = (position) ->
@@ -659,13 +678,26 @@ onHistoryChange = (event) ->
   if event.state?.turbolinks && event.state.url != currentState.url
     previousUrl = new ComponentUrl(currentState.url)
     newUrl = new ComponentUrl(event.state.url)
-
-    if newUrl.withoutHash() is previousUrl.withoutHash()
+    
+    if event.state.page_name? and event.state.page_name is currentState.page_name
+      console.log "Named page #{event.state.page_name} is already shown"
+      document.title = event.state.title if event.state.title?
+      rememberCurrentUrlAndState event.state, event.state.url
+      triggerEvent EVENTS.NAMED_PAGE, event.state.page_name
+    else if event.state.page_name? and cachedPage = pageCache[event.state.page_name]
+      console.log "Restoring named page", event.state.page_name
+      cacheCurrentPage()
+      fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
+      triggerEvent EVENTS.NAMED_PAGE, event.state.page_name
+    
+    else if newUrl.withoutHash() is previousUrl.withoutHash()
       updateScrollPosition()
     else if cachedPage = pageCache[newUrl.absolute]
+      console.log "Restoring url", newUrl.absolute
       cacheCurrentPage()
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
     else
+      console.log "Fetching history page", event.target.location.href
       visit event.target.location.href
 
 initializeTurbolinks = ->
@@ -729,5 +761,7 @@ else
   ProgressBar: ProgressBarAPI,
   allowLinkExtensions: Link.allowExtensions,
   supported: browserSupportsTurbolinks,
+  nameCurrentPage: nameCurrentPage,
+  pushCustomState: pushCustomState,
   EVENTS: clone(EVENTS)
 }

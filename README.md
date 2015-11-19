@@ -1,3 +1,10 @@
+Named pages fork
+================
+
+This fork of the [Turbolinks library](https://github.com/rails/turbolinks/tree/master) adds two new features:
+- Names pages: (`nameCurrentPage`). This is convenient when you want to (re)use the same page for different URLs. E.g. `/chapters/1,...,/chapters/N` should all refer to the same page named `book`. An additional event has been added `page:named` (data: name of the page) to handle loading/restoring of a named page.
+- `pushCustomState` to push a custom state onto the history stack. As opposed to just calling `history.pushState`, this updates the internal Turbolinks state, such that, when you navigate away to a different page, the old page is stored with the correct metadata.
+
 Turbolinks
 ==========
 [![Build Status](https://travis-ci.org/rails/turbolinks.svg?branch=master)](https://travis-ci.org/rails/turbolinks)
