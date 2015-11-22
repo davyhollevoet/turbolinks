@@ -25,6 +25,7 @@ EVENTS =
   AFTER_REMOVE:   'page:after-remove'
   NAMED_ENTER:    'page:named-enter'
   NAMED_EXIT:     'page:named-exit'
+  NAMED_KEEP:     'page:named-keep'
 
 isPartialReplacement = (options) ->
   options.change or options.append or options.prepend
@@ -686,7 +687,7 @@ onHistoryChange = (event) ->
       console.log "Named page #{event.state.page_name} is already shown"
       document.title = event.state.title if event.state.title?
       rememberCurrentUrlAndState event.state, event.state.url
-      triggerEvent EVENTS.NAMED_ENTER, event.state.page_name
+      triggerEvent EVENTS.NAMED_KEEP, event.state.page_name
     else if event.state.page_name? and cachedPage = pageCache[event.state.page_name]
       console.log "Restoring named page", event.state.page_name
       triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
