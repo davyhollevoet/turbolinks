@@ -306,7 +306,7 @@ setCurrentTitle = (state) ->
   document.title = state.title if state.title?
   
 nameCurrentPage = (name, state = {}) ->
-  old_name = window.history.state.page_name
+  old_name = window.history?.state?.page_name
   setCurrentTitle state
   rememberCurrentUrlAndState $.extend( page_name: name , state)
   if name isnt old_name
