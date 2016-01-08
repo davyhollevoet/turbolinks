@@ -306,7 +306,15 @@ setCurrentTitle = (state) ->
   document.title = state.title if state.title?
   
 nameCurrentPage = (name, state = {}) ->
-  old_name = window.history?.state?.page_name
+
+  unless browserSupportsTurbolinks
+    if currentState?.page_name isnt name
+      currentState =
+        page_name: name
+      triggerEvent EVENTS.NAMED_ENTER, name
+    return
+
+  old_name = window.history.state.page_name
   setCurrentTitle state
   rememberCurrentUrlAndState $.extend( page_name: name , state)
   if name isnt old_name
@@ -351,10 +359,13 @@ triggerEvent = (name, data) ->
   if typeof Prototype isnt 'undefined'
     Event.fire document, name, data, true
 
-  event = document.createEvent 'Events'
-  event.data = data if data
-  event.initEvent name, true, true
-  document.dispatchEvent event
+  if document.createEvent?
+    event = document.createEvent 'Events'
+    event.data = data if data
+    event.initEvent name, true, true
+    document.dispatchEvent event
+  else
+    $.event.trigger name, data
 
 pageChangePrevented = (url) ->
   !triggerEvent EVENTS.BEFORE_CHANGE, url: url
