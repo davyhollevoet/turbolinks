@@ -307,22 +307,28 @@ setCurrentTitle = (state) ->
   
 nameCurrentPage = (name, state = {}) ->
 
-  unless browserSupportsTurbolinks
-    if currentState?.page_name isnt name
-      currentState =
-        page_name: name
-      triggerEvent EVENTS.NAMED_ENTER, name
-    return
+  if browserSupportsTurbolinks
+    old_name = window.history.state.page_name
+  else
+    old_name = currentState?.page_name
 
-  old_name = window.history.state.page_name
   setCurrentTitle state
-  rememberCurrentUrlAndState $.extend( page_name: name , state)
+  
+  if browserSupportsTurbolinks
+    rememberCurrentUrlAndState $.extend( page_name: name , state)
+  else
+    currentState =
+      page_name: name
+
   if name isnt old_name
     triggerEvent EVENTS.NAMED_EXIT, old_name
     triggerEvent EVENTS.NAMED_ENTER, name
 
 pushCustomState = (state, url = document.location.href) ->
-  window.history.pushState $.extend( turbolinks: true, url: url , state), '', url
+
+  if browserSupportsTurbolinks
+    window.history.pushState $.extend( turbolinks: true, url: url , state), '', url
+  
   setCurrentTitle state
   currentState = window.history.state
 
