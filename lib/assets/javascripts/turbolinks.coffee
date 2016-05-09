@@ -298,7 +298,10 @@ crossOriginRedirect = ->
 rememberReferer = ->
   referer = document.location.href
 
-rememberCurrentUrlAndState = (state = {}, url = document.location.href)->
+# explicitly set state = {} if you want to set an empty state
+# the default behaviour is to keep the current state
+rememberCurrentUrlAndState = (state = currentState || {}, url = document.location.href)->
+
   window.history.replaceState $.extend( turbolinks: true, url: url , state), '', url
   currentState = window.history.state
 
@@ -726,7 +729,7 @@ onHistoryChange = (event) ->
       visit event.target.location.href
 
 initializeTurbolinks = ->
-  rememberCurrentUrlAndState()
+  rememberCurrentUrlAndState {}
   ProgressBar.enable()
 
   document.addEventListener 'click', Click.installHandlerLast, true
