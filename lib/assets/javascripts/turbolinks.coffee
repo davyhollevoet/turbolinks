@@ -93,6 +93,7 @@ fetchReplacement = (url, options) ->
       updateScrollPosition(options.scroll)
       triggerEvent (if isPartialReplacement(options) then EVENTS.PARTIAL_LOAD else EVENTS.LOAD), loadedNodes
       constrainPageCacheTo(cacheSize)
+      triggerEvent EVENTS.NAMED_ENTER, options.trigger_named_enter if options.trigger_named_enter?
     else
       progressBar?.done()
       document.location.href = crossOriginRedirect() or url.absolute
@@ -715,7 +716,6 @@ onHistoryChange = (event) ->
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
       document.title = event.state.title if event.state.title?
       triggerEvent EVENTS.NAMED_ENTER, event.state.page_name
-    
     else if newUrl.withoutHash() is previousUrl.withoutHash()
       updateScrollPosition()
     else if cachedPage = pageCache[newUrl.absolute]
@@ -724,9 +724,11 @@ onHistoryChange = (event) ->
       cacheCurrentPage()
       fetchHistory cachedPage, scroll: [cachedPage.positionX, cachedPage.positionY]
     else
-      console.log "Fetching history page", event.target.location.href
       triggerEvent EVENTS.NAMED_EXIT, currentState.page_name if currentState.page_name?
-      visit event.target.location.href
+      # if we get here with event.state.page_name?==true, then we've returned to a named page, but hit an empty cache :(
+      # so we load the page and then trigger NAMED_ENTER manually (because page_name != currentState.page_name)
+      console.log 'Fetching history page', event.target.location.href, 'trigger_named_enter:', event.state.page_name
+      visit event.target.location.href, trigger_named_enter: event.state.page_name
 
 initializeTurbolinks = ->
   rememberCurrentUrlAndState {}
