@@ -288,7 +288,7 @@ reflectNewUrl = (url) ->
     window.history.pushState { turbolinks: true, url: url.absolute }, '', url.absolute
 
 reflectRedirectedUrl = ->
-  if location = xhr.getResponseHeader 'X-XHR-Redirected-To'
+  if location = xhr.responseURL or xhr.getResponseHeader 'X-XHR-Redirected-To'
     location = new ComponentUrl location
     preservedHash = if location.hasNoHash() then document.location.hash else ''
     window.history.replaceState window.history.state, '', location.href + preservedHash
